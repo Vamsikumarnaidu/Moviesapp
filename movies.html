@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Search & Favorites</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        h1 {
+            color: #667eea;
+            font-size: 2em;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .nav-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s;
+            background: #667eea;
+            color: white;
+        }
+
+        .nav-btn:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+        }
+
+        .nav-btn.active {
+            background: #764ba2;
+        }
+
+        .search-section {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        #searchInput {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: border 0.3s;
+        }
+
+        #searchInput:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        #searchBtn {
+            padding: 15px 30px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        #searchBtn:hover {
+            background: #764ba2;
+            transform: scale(1.05);
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        .movies-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 25px;
+            margin-top: 20px;
+        }
+
+        .movie-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+        }
+
+        .movie-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .movie-poster {
+            width: 100%;
+            height: 350px;
+            object-fit: cover;
+            background: #f0f0f0;
+        }
+
+        .movie-info {
+            padding: 15px;
+        }
+
+        .movie-title {
+            font-size: 1.2em;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .movie-details {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+
+        .movie-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #764ba2;
+        }
+
+        .btn-favorite {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .btn-favorite:hover {
+            background: #ee5a52;
+        }
+
+        .btn-favorite.added {
+            background: #51cf66;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.2em;
+            color: white;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .movie-detail {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .detail-content {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 30px;
+        }
+
+        .detail-poster {
+            width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .detail-info h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 2em;
+        }
+
+        .detail-row {
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+
+        .detail-label {
+            font-weight: 700;
+            color: #667eea;
+            display: inline-block;
+            min-width: 100px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: white;
+            font-size: 1.2em;
+        }
+
+        .empty-state h3 {
+            margin-bottom: 10px;
+            font-size: 1.5em;
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            h1 {
+                font-size: 1.5em;
+            }
+
+            .search-box {
+                flex-direction: column;
+            }
+
+            .detail-content {
+                grid-template-columns: 1fr;
+            }
+
+            .movies-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                gap: 15px;
+            }
+
+            .movie-poster {
+                height: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <h1>🎬 Movie Search & Favorites</h1>
+                <div class="nav-buttons">
+                    <button class="nav-btn active" onclick="showPage('search')">Search</button>
+                    <button class="nav-btn" onclick="showPage('favorites')">Favorites</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Search Page -->
+        <div id="searchPage" class="page active">
+            <div class="search-section">
+                <h2 style="margin-bottom: 20px; color: #667eea;">Search Movies</h2>
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="Enter movie name..." onkeypress="handleKeyPress(event)">
+                    <button id="searchBtn" onclick="searchMovies()">Search</button>
+                </div>
+            </div>
+            <div id="searchResults"></div>
+        </div>
+
+        <!-- Favorites Page -->
+        <div id="favoritesPage" class="page">
+            <div id="favoritesResults"></div>
+        </div>
+
+        <!-- Movie Detail Page -->
+        <div id="detailPage" class="page">
+            <div id="movieDetail"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_KEY = 'b621611'; // Replace with your OMDb API key
+        const API_URL = 'https://www.omdbapi.com/';
+        let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+
+        function showPage(page) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            
+            if (page === 'search') {
+                document.getElementById('searchPage').classList.add('active');
+                document.querySelectorAll('.nav-btn')[0].classList.add('active');
+            } else if (page === 'favorites') {
+                document.getElementById('favoritesPage').classList.add('active');
+                document.querySelectorAll('.nav-btn')[1].classList.add('active');
+                displayFavorites();
+            } else if (page === 'detail') {
+                document.getElementById('detailPage').classList.add('active');
+            }
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                searchMovies();
+            }
+        }
+
+        async function searchMovies() {
+            const searchTerm = document.getElementById('searchInput').value.trim();
+            const resultsDiv = document.getElementById('searchResults');
+            
+            if (!searchTerm) {
+                alert('Please enter a movie name');
+                return;
+            }
+
+            resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div><p>Searching movies...</p></div>';
+
+            try {
+                const response = await fetch(`${API_URL}?apikey=${API_KEY}&s=${encodeURIComponent(searchTerm)}`);
+                const data = await response.json();
+
+                if (data.Response === 'True') {
+                    displayMovies(data.Search, resultsDiv);
+                } else {
+                    alert('No movies found! Try a different search term.');
+                    resultsDiv.innerHTML = '<div class="empty-state"><h3>No Results Found</h3><p>Try searching for another movie</p></div>';
+                }
+            } catch (error) {
+                alert('Error fetching movies. Please try again.');
+                resultsDiv.innerHTML = '<div class="empty-state"><h3>Error</h3><p>Failed to fetch movies</p></div>';
+            }
+        }
+
+        function displayMovies(movies, container) {
+            container.innerHTML = '<div class="movies-grid"></div>';
+            const grid = container.querySelector('.movies-grid');
+
+            movies.forEach(movie => {
+                const isFavorite = favorites.some(fav => fav.imdbID === movie.imdbID);
+                const card = document.createElement('div');
+                card.className = 'movie-card';
+                card.innerHTML = `
+                    <img src="${movie.Poster !== 'N/A' ? movie.Poster : 'https://via.placeholder.com/300x450?text=No+Poster'}" 
+                         alt="${movie.Title}" 
+                         class="movie-poster"
+                         onclick="showMovieDetail('${movie.imdbID}')">
+                    <div class="movie-info">
+                        <div class="movie-title">${movie.Title}</div>
+                        <div class="movie-details">
+                            <div>Year: ${movie.Year}</div>
+                            <div>Type: ${movie.Type}</div>
+                        </div>
+                        <div class="movie-actions">
+                            <button class="btn btn-primary" onclick="showMovieDetail('${movie.imdbID}')">Details</button>
+                            <button class="btn btn-favorite ${isFavorite ? 'added' : ''}" 
+                                    onclick="toggleFavorite('${movie.imdbID}', event)">
+                                ${isFavorite ? '★ Favorited' : '☆ Favorite'}
+                            </button>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        async function showMovieDetail(imdbID) {
+            showPage('detail');
+            const detailDiv = document.getElementById('movieDetail');
+            detailDiv.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading movie details...</p></div>';
+
+            try {
+                const response = await fetch(`${API_URL}?apikey=${API_KEY}&i=${imdbID}&plot=full`);
+                const movie = await response.json();
+
+                if (movie.Response === 'True') {
+                    const isFavorite = favorites.some(fav => fav.imdbID === movie.imdbID);
+                    detailDiv.innerHTML = `
+                        <div class="movie-detail">
+                            <button class="btn btn-primary" onclick="showPage('search')" style="margin-bottom: 20px;">← Back to Search</button>
+                            <div class="detail-content">
+                                <div>
+                                    <img src="${movie.Poster !== 'N/A' ? movie.Poster : 'https://via.placeholder.com/300x450?text=No+Poster'}" 
+                                         alt="${movie.Title}" 
+                                         class="detail-poster">
+                                    <button class="btn btn-favorite ${isFavorite ? 'added' : ''}" 
+                                            onclick="toggleFavorite('${movie.imdbID}', event)" 
+                                            style="width: 100%; margin-top: 15px;">
+                                        ${isFavorite ? '★ Favorited' : '☆ Add to Favorites'}
+                                    </button>
+                                </div>
+                                <div class="detail-info">
+                                    <h2>${movie.Title} (${movie.Year})</h2>
+                                    <div class="detail-row">
+                                        <span class="detail-label">Rating:</span> ${movie.Rated}
+                                    </div>
+                                    <div class="detail-row">
+                                        <span class="detail-label">Runtime:</span> ${movie.Runtime}
+                                    </div>
+                                    <div class="detail-row">
+                                        <span class="detail-label">Genre:</span> ${movie.Genre}
+                                    </div>
+                                    <div class="detail-row">
+                                        <span class="detail-label">Director:</span> ${movie.Director}
+                                    </div>
+                                    <div class="detail-row">
+                                        <span class="detail-label">Writer:</span> ${movie.Writer}
+                                    </div>
+                                    <div class="detail-row">
+                                        <span class="detail-label">Actors:</span> ${movie.Actors}
+                                    </div>
+                                    <div class="detail-row">
+                                        <span class="detail-label">Plot:</span> ${movie.Plot}
+                                    </div>
+                                    <div class="detail-row">
+                                        <span class="detail-label">Language:</span> ${movie.Language}
+                                    </div>
+                                    <div class="detail-row">
+                                        <span class="detail-label">Country:</span> ${movie.Country}
+                                    </div>
+                                    <div class="detail-row">
+                                        <span class="detail-label">Awards:</span> ${movie.Awards}
+                                    </div>
+                                    <div class="detail-row">
+                                        <span class="detail-label">IMDb Rating:</span> ${movie.imdbRating}/10 (${movie.imdbVotes} votes)
+                                    </div>
+                                    ${movie.BoxOffice !== 'N/A' ? `
+                                        <div class="detail-row">
+                                            <span class="detail-label">Box Office:</span> ${movie.BoxOffice}
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    detailDiv.innerHTML = '<div class="empty-state"><h3>Error</h3><p>Failed to load movie details</p></div>';
+                }
+            } catch (error) {
+                detailDiv.innerHTML = '<div class="empty-state"><h3>Error</h3><p>Failed to fetch movie details</p></div>';
+            }
+        }
+
+        async function toggleFavorite(imdbID, event) {
+            event.stopPropagation();
+            const index = favorites.findIndex(fav => fav.imdbID === imdbID);
+
+            if (index > -1) {
+                favorites.splice(index, 1);
+            } else {
+                try {
+                    const response = await fetch(`${API_URL}?apikey=${API_KEY}&i=${imdbID}`);
+                    const movie = await response.json();
+                    if (movie.Response === 'True') {
+                        favorites.push({
+                            imdbID: movie.imdbID,
+                            Title: movie.Title,
+                            Year: movie.Year,
+                            Poster: movie.Poster,
+                            Type: movie.Type
+                        });
+                    }
+                } catch (error) {
+                    alert('Error adding to favorites');
+                    return;
+                }
+            }
+
+            localStorage.setItem('favorites', JSON.stringify(favorites));
+            
+            // Update button state
+            const btn = event.target;
+            if (index > -1) {
+                btn.classList.remove('added');
+                btn.textContent = '☆ Favorite';
+            } else {
+                btn.classList.add('added');
+                btn.textContent = '★ Favorited';
+            }
+
+            // Refresh favorites page if currently viewing it
+            if (document.getElementById('favoritesPage').classList.contains('active')) {
+                displayFavorites();
+            }
+        }
+
+        function displayFavorites() {
+            const favDiv = document.getElementById('favoritesResults');
+            
+            if (favorites.length === 0) {
+                favDiv.innerHTML = '<div class="empty-state"><h3>No Favorites Yet</h3><p>Add some movies to your favorites list!</p></div>';
+                return;
+            }
+
+            displayMovies(favorites, favDiv);
+        }
+
+        // Load favorites on page load
+        displayFavorites();
+    </script>
+</body>
+</html>
